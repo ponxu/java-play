@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<config>
+    <description>test config</description>
+    <db>
+        <url>jdbc://1</url>
+    </db>
+    <db>
+        <url>jdbc://2</url>
+    </db>
+</config>
