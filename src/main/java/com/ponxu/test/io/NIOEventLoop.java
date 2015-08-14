@@ -3,7 +3,10 @@ package com.ponxu.test.io;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -28,7 +31,7 @@ public class NIOEventLoop extends Thread {
 
         isRunning = true;
         selector = Selector.open();
-        buffer = ByteBuffer.allocate(1024);
+        buffer = ByteBuffer.allocateDirect(1024 * 64);
 
         willEvents = new ArrayList<>();
 
