@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by xwz on 15-8-14.
  */
-public class TestMainClient {
+public class TestOnepieceClient {
     public static void main(String[] args) throws Exception {
         List<Socket> sockets = new ArrayList<>();
         for (int i = 0; i < 200000; i++) {
