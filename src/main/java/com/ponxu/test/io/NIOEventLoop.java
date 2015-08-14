@@ -3,7 +3,7 @@ package com.ponxu.test.io;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -14,6 +14,8 @@ public class NIOEventLoop extends Thread {
     private Selector selector;
     private ByteBuffer buffer;
 
+    private List<Object[]> willEvents;
+
     private AtomicLong acceptCounter;
     private NIOEventLoop[] workEventLoops;
 
@@ -22,19 +24,24 @@ public class NIOEventLoop extends Thread {
     }
 
     public NIOEventLoop(NIOEventLoop[] workEventLoops) throws IOException {
-        super("NIOEventLoop-" + workEventLoops == null ? "Boss" : "Worker");
+        super("NIOEventLoop-" + (workEventLoops == null ? "Worker" : "Boss"));
 
         isRunning = true;
         selector = Selector.open();
         buffer = ByteBuffer.allocate(1024);
 
+        willEvents = new ArrayList<>();
+
         this.acceptCounter = new AtomicLong(0);
         this.workEventLoops = workEventLoops;
     }
 
-    public SelectionKey registerEvent(SelectableChannel channel, int ops) throws ClosedChannelException {
-        selector.wakeup();
-        return channel.register(selector, ops);
+    public void registerEvent(SelectableChannel channel, int ops) {
+        synchronized (willEvents) {
+            willEvents.add(new Object[]{channel, ops});
+            System.out.println("Will register event: " + channel + " " + ops);
+            selector.wakeup();
+        }
     }
 
     public void close() throws IOException {
@@ -47,10 +54,15 @@ public class NIOEventLoop extends Thread {
     public void run() {
         while (isRunning) {
             try {
-                int n = selector.select(10000);
+                // register event
+                doRegisterEvent();
+
+                // wait event
+                int n = selector.select();
                 System.out.println("Select: " + n);
                 if (n <= 0) continue;
 
+                // deal with event TODO use iterator
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
                 for (SelectionKey key : selectedKeys) {
                     if (!key.isValid()) continue;
@@ -62,6 +74,21 @@ public class NIOEventLoop extends Thread {
                 selectedKeys.clear();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void doRegisterEvent() throws ClosedChannelException {
+        synchronized (willEvents) {
+            Iterator<Object[]> it = willEvents.iterator();
+            while (it.hasNext()) {
+                Object[] event = it.next();
+                it.remove();
+
+                SelectableChannel channel = (SelectableChannel) event[0];
+                int ops = (int) event[1];
+                channel.register(selector, ops);
+                System.out.println("Register event: " + channel + " " + ops);
             }
         }
     }
@@ -87,11 +114,15 @@ public class NIOEventLoop extends Thread {
         System.out.println("Read: " + n);
 
         if (n == -1) {
-            channel.close();
-            System.out.println("Key size: " + selector.keys().size());
+            doClose(key);
         } else {
             buffer.flip();
         }
+    }
+
+    private void doClose(SelectionKey key) throws IOException {
+        key.channel().close();
+        System.out.println("Key size: " + selector.keys().size());
     }
 
     private void doWrite(SelectionKey key) throws IOException {
