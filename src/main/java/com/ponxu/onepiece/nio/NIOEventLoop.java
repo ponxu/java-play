@@ -1,5 +1,10 @@
 package com.ponxu.onepiece.nio;
 
+import com.ponxu.onepiece.Connection;
+import com.ponxu.onepiece.Handler;
+import com.ponxu.onepiece.codec.Decoder;
+import com.ponxu.onepiece.codec.Encoder;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
@@ -13,30 +18,36 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by xwz on 15-8-13.
  */
 public class NIOEventLoop extends Thread {
+    private NIOServer server;
     private boolean isRunning;
     private Selector selector;
     private ByteBuffer buffer;
 
     private List<Object[]> willEvents;
-
+    // accept deal
     private AtomicLong acceptCounter;
     private NIOEventLoop[] workEventLoops;
 
-    public NIOEventLoop() throws IOException {
-        this(null);
+    private NIOHandler handler;
+
+
+    public NIOEventLoop(NIOServer server) throws IOException {
+        this(server, null);
     }
 
-    public NIOEventLoop(NIOEventLoop[] workEventLoops) throws IOException {
+    public NIOEventLoop(NIOServer server, NIOEventLoop[] workEventLoops) throws IOException {
         super("NIOEventLoop-" + (workEventLoops == null ? "Worker" : "Boss"));
 
-        isRunning = true;
-        selector = Selector.open();
-        buffer = ByteBuffer.allocateDirect(1024 * 64);
+        this.server = server;
+        this.isRunning = true;
+        this.selector = Selector.open();
+        this.buffer = ByteBuffer.allocateDirect(1024 * 64);
 
-        willEvents = new ArrayList<>();
+        this.willEvents = new ArrayList<>();
 
         this.acceptCounter = new AtomicLong(0);
         this.workEventLoops = workEventLoops;
+        this.handler = new NIOHandler(server);
     }
 
     public void registerEvent(SelectableChannel channel, int ops) {
@@ -90,8 +101,15 @@ public class NIOEventLoop extends Thread {
 
                 SelectableChannel channel = (SelectableChannel) event[0];
                 int ops = (int) event[1];
-                channel.register(selector, ops);
+                SelectionKey key = channel.register(selector, ops);
                 System.out.println("Register event: " + channel + " " + ops);
+
+                // if reg read: deal connected callback
+                if ((ops & SelectionKey.OP_READ) != 0) {
+                    Connection conn = new NIOConnection((SocketChannel) channel);
+                    key.attach(conn);
+                    handler.onConnected(conn);
+                }
             }
         }
     }
@@ -120,12 +138,19 @@ public class NIOEventLoop extends Thread {
             doClose(key);
         } else {
             buffer.flip();
+            // deal read callback
+            Connection conn = (Connection) key.attachment();
+            handler.onRead(conn, buffer);
         }
     }
 
     private void doClose(SelectionKey key) throws IOException {
         key.channel().close();
         System.out.println("Key size: " + selector.keys().size());
+
+        // deal closed callback
+        Connection conn = (Connection) key.attachment();
+        handler.onClosed(conn);
     }
 
     private void doWrite(SelectionKey key) throws IOException {

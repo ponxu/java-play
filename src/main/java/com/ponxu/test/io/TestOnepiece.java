@@ -1,9 +1,12 @@
 package com.ponxu.test.io;
 
+import com.ponxu.onepiece.Connection;
+import com.ponxu.onepiece.Handler;
 import com.ponxu.onepiece.Server;
 import com.ponxu.onepiece.nio.NIOServer;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Scanner;
 
 /**
@@ -11,7 +14,8 @@ import java.util.Scanner;
  */
 public class TestOnepiece {
     public static void main(String[] args) throws IOException {
-        Server s = new NIOServer(8080);
+        Server s = new NIOServer().port(8080).handler(new EchoHandler()).build();
+
         s.start();
         System.out.println("listen on 8080");
 
@@ -24,5 +28,28 @@ public class TestOnepiece {
                 // break;
             }
         }
+    }
+}
+
+
+class EchoHandler implements Handler {
+    @Override
+    public void onConnected(Connection conn) {
+        conn.write("welcome\n".getBytes());
+    }
+
+    @Override
+    public void onRead(Connection conn, Object receivedData) {
+        conn.write((ByteBuffer) receivedData);
+    }
+
+    @Override
+    public void onClosed(Connection conn) {
+
+    }
+
+    @Override
+    public void onError(Connection conn, Throwable cause) {
+
     }
 }
