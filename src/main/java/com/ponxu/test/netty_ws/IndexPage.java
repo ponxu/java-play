@@ -22,7 +22,7 @@ import io.netty.util.CharsetUtil;
 /**
  * Generates the demo HTML page which is served at http://localhost:8080/
  */
-public final class WebSocketServerIndexPage {
+public final class IndexPage {
 
     private static final String NEWLINE = "\r\n";
 
@@ -73,7 +73,7 @@ public final class WebSocketServerIndexPage {
                         "</html>" + NEWLINE, CharsetUtil.US_ASCII);
     }
 
-    private WebSocketServerIndexPage() {
+    private IndexPage() {
         // Unused
     }
 }

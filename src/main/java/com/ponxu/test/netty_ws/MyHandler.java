@@ -42,7 +42,7 @@ import static io.netty.handler.codec.http.HttpVersion.*;
 /**
  * Handles handshakes and messages
  */
-public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+public class MyHandler extends SimpleChannelInboundHandler<Object> {
 
     private static final String WEBSOCKET_PATH = "/websocket";
 
@@ -63,6 +63,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
     }
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+        System.out.println("handleHttpRequest..." + req.uri());
         // Handle a bad request.
         if (!req.decoderResult().isSuccess()) {
             sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST));
@@ -77,7 +78,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
         // Send the demo page and favicon.ico
         if ("/".equals(req.uri())) {
-            ByteBuf content = WebSocketServerIndexPage.getContent(getWebSocketLocation(req));
+            ByteBuf content = IndexPage.getContent(getWebSocketLocation(req));
             FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, content);
 
             res.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
@@ -104,6 +105,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
     }
 
     private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
+        System.out.println("handleWebSocketFrame..." + frame.getClass());
 
         // Check for closing frame
         if (frame instanceof CloseWebSocketFrame) {
@@ -115,14 +117,16 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             return;
         }
         if (!(frame instanceof TextWebSocketFrame)) {
-            throw new UnsupportedOperationException(String.format("%s frame types not supported", frame.getClass()
-                    .getName()));
+//            throw new UnsupportedOperationException(String.format("%s frame types not supported",
+//                    frame.getClass() .getName()));
+            ctx.channel().write(new TextWebSocketFrame("Hello2"));
         }
 
         // Send the uppercase string back.
         String request = ((TextWebSocketFrame) frame).text();
         System.err.printf("%s received %s%n", ctx.channel(), request);
-        ctx.channel().write(new TextWebSocketFrame(request.toUpperCase()));
+        // ctx.channel().write(new TextWebSocketFrame(request.toUpperCase()));
+        ctx.channel().write(new TextWebSocketFrame("Hello1"));
     }
 
     private static void sendHttpResponse(
@@ -150,7 +154,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
     private static String getWebSocketLocation(FullHttpRequest req) {
         String location = req.headers().get(HOST) + WEBSOCKET_PATH;
-        if (WebSocketServer.SSL) {
+        if (MyServer.SSL) {
             return "wss://" + location;
         } else {
             return "ws://" + location;

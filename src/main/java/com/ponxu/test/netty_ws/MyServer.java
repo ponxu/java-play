@@ -43,7 +43,7 @@ import io.netty.handler.ssl.SslContext;
  * <li>Firefox 11+ (RFC 6455 aka draft-ietf-hybi-thewebsocketprotocol-17)
  * </ul>
  */
-public final class WebSocketServer {
+public final class MyServer {
 
     static final boolean SSL = System.getProperty("ssl") != null;
     static final int PORT = Integer.parseInt(System.getProperty("port", SSL ? "8443" : "8080"));
@@ -63,7 +63,7 @@ public final class WebSocketServer {
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new WebSocketServerInitializer(sslCtx));
+                    .childHandler(new MyInitializer(sslCtx));
 
             Channel ch = b.bind(PORT).sync().channel();
 
