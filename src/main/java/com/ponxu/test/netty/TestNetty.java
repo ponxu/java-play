@@ -1,4 +1,4 @@
-package com.ponxu.test;
+package com.ponxu.test.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -31,11 +31,13 @@ public class TestNetty {
 
             // Bind and start to accept incoming connections.
             ChannelFuture f = b.bind(PORT).sync();
+            System.out.println("bind...........");
 
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
             // shut down your server.
             f.channel().closeFuture().sync();
+            System.out.println("close...........");
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
@@ -43,19 +45,18 @@ public class TestNetty {
     }
 }
 
-class EchoServerHandler extends ChannelHandlerAdapter {
+class EchoServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf in = (ByteBuf) msg;
         System.out.println(in.toString(io.netty.util.CharsetUtil.US_ASCII));
         ctx.write(msg);
-        ctx.flush();
     }
 
-//    @Override
-//    public void channelReadComplete(ChannelHandlerContext ctx) {
-//        ctx.flush();
-//    }
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        ctx.flush();
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
