@@ -1,5 +1,6 @@
 package com.ponxu.test.dubbo;
 
+import com.ponxu.utils.Utils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
@@ -12,10 +13,18 @@ public class ConsumerMain {
         context.start();
 
         DemoService demoService = (DemoService) context.getBean("demoService");
-        int ret = demoService.add(1, 2);
-        System.out.println(ret);
-
-        context.close();
+        for (int i = 0; i < 100; i++) {
+            new Thread("Test" + i) {
+                @Override
+                public void run() {
+                    for (int k = 0; k < 100; k++) {
+                        int ret = demoService.add(1, 2);
+                        System.out.println(Thread.currentThread().getName() + " " + k + " " + ret);
+                        Utils.sleep(10);
+                    }
+                }
+            }.start();
+        }
     }
 
 }
