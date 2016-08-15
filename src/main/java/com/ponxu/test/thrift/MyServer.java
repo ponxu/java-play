@@ -3,7 +3,7 @@ package com.ponxu.test.thrift;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 
@@ -31,10 +31,8 @@ public class MyServer {
             TProcessor processor = new Calculator.Processor<Calculator.Iface>(new CalculatorImpl());
 
             TServerTransport serverTransport = new TServerSocket(9090);
-            TServer server = new TSimpleServer(new TServer.Args(serverTransport).processor(processor));
-
-            // Use this for a multithreaded server
-            // TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
+            // TServer server = new TSimpleServer(new TServer.Args(serverTransport).processor(processor));
+            TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
             System.out.println("Starting the simple server...");
             server.serve();
