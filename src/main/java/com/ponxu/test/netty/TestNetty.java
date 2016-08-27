@@ -6,6 +6,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 
 /**
  * Created by xwz on 15-8-12.
@@ -51,6 +53,10 @@ class EchoServerHandler extends ChannelInboundHandlerAdapter {
         ByteBuf in = (ByteBuf) msg;
         System.out.println(in.toString(io.netty.util.CharsetUtil.US_ASCII));
         ctx.write(msg);
+
+        System.out.println("R_a: " + ((ReferenceCounted) msg).refCnt());
+        ReferenceCountUtil.release(msg);
+        System.out.println("R_b: " + ((ReferenceCounted) msg).refCnt());
     }
 
     @Override
