@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Set;
 
 /**
  * @author xuwenzhao
@@ -16,7 +17,27 @@ public class Sender {
         sc.configureBlocking(false);
         sc.connect(new InetSocketAddress("127.0.0.1", 9999));
 
-        Selector selector= Selector.open();
+        Selector selector = Selector.open();
         sc.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE | SelectionKey.OP_READ);
+
+        while (true) {
+            selector.select();
+            Set<SelectionKey> keys = selector.selectedKeys();
+            for (SelectionKey key : keys) {
+                if (key.isConnectable()) {
+                    SocketChannel channel = (SocketChannel) key.channel();
+                    if (channel.isConnectionPending()) {
+                        channel.finishConnect();
+                    }
+                    System.out.println("connect finished");
+                } else if (key.isReadable()) {
+                    // System.out.println("isReadable");
+                } else if (key.isWritable()) {
+
+                    //System.out.println("isWritable");
+                }
+            }
+            keys.clear();
+        }
     }
 }
