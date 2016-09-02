@@ -41,7 +41,7 @@ public class Receiver {
                 byte[] buffer = new byte[1024];
                 while ((len = in.read(buffer)) != -1) {
                     fout.write(buffer, 0, len);
-                    System.exit(0);
+                    System.out.println(len);
                 }
                 System.out.println("client closed");
             } catch (IOException e) {
