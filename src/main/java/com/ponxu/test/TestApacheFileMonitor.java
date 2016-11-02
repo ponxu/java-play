@@ -24,6 +24,16 @@ public class TestApacheFileMonitor {
             public void onFileDelete(File file) {
                 System.out.println(file + " delete");
             }
+
+            @Override
+            public void onDirectoryCreate(File directory) {
+                System.out.println(directory + " create");
+            }
+
+            @Override
+            public void onDirectoryDelete(File directory) {
+                System.out.println(directory + " delete");
+            }
         });
 
 
