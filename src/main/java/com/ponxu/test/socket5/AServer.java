@@ -44,7 +44,6 @@ public class AServer implements Life {
             public void doAccept(SelectionKey key) throws IOException {
                 SocketChannel client = ssc.accept();
                 client.configureBlocking(false);
-                downLoop.register(client, SelectionKey.OP_READ, new Session(client));
                 System.out.println(client + " connected..");
             }
         });
